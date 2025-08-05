@@ -81,6 +81,8 @@ class User_DATA():
             for user in self.user_list:
                 if user.phonenumber == phonenumber_input:
                     return False
+            if len(phonenumber_input) < int(list_[1]):
+                return 1
             return True
         return False
     
@@ -91,16 +93,19 @@ class User_DATA():
         return False
     
     def signup(self,user_tuple):
-        if not self.is_valid_password(user_tuple[3]):
-            return 1
-        if not self.is_valid_email(user_tuple[2]):
-            return 2
-        if not self.is_valid_phonenumber(user_tuple[5],user_tuple[4]): #khong trung
-            return 3
+        phonenumber_check = self.is_valid_phonenumber(user_tuple[5], user_tuple[4])
         if not self.is_valid_business_name(user_tuple[0]): #khong trung business name
             return 4
         if not self.is_valid_username(user_tuple[1]): #khong trung username
             return 5
+        if not self.is_valid_email(user_tuple[2]):
+            return 2
+        if not self.is_valid_password(user_tuple[3]):
+            return 1
+        if not phonenumber_check == True: #khong trung
+            return 3
+        elif phonenumber_check == 1:
+            user_tuple = (user_tuple[0],user_tuple[1],user_tuple[2],user_tuple[3],'0'+user_tuple[4],user_tuple[5])
         if self.get_user_by_email(user_tuple[2]): #khong trung V
             return 6
         new_user = User(id = len(self.user_list),business_name=user_tuple[0],username=user_tuple[1],email=user_tuple[2],password=user_tuple[3],phonenumber=user_tuple[4],countrycode=user_tuple[5])
@@ -108,9 +113,21 @@ class User_DATA():
         self.insert(user_tuple)
         return new_user
     
+    def checkphonenumber(self, input_number, stored_number):
+        input_number = str(input_number).strip()
+        stored_number = str(stored_number).strip()
+
+        if input_number == stored_number:
+            return True
+        elif input_number == "0" + stored_number:
+            return True
+        elif stored_number == "0" + input_number:
+            return True
+        return False
+
     def signin(self, user_tuple):
         user = self.get_user_by_email(user_tuple[0].strip())
-        if user and str(user.password).strip() == str(user_tuple[1]).strip() and str(user_tuple[2]).strip() in user.phonenumber:
+        if user and str(user.password).strip() == str(user_tuple[1]).strip() and self.checkphonenumber(user_tuple[2],user.phonenumber):
             if user_tuple[3]:
                 config = configparser.ConfigParser()
                 config["Keeplogin"] = {
