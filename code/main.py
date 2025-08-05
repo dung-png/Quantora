@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication,QMainWindow,QLineEdit,QMessageBox
+from PyQt6.QtWidgets import QApplication,QMainWindow,QLineEdit,QMessageBox,QPushButton
 from PyQt6 import uic
 import sys
 from database import User_DATA
@@ -15,6 +15,7 @@ class LoginWindow(QMainWindow):
         self.keepmelogin = self.Checkbox.isChecked()
     
     def Homepage(self):
+        global HOMEPG
         email = self.Email.text().strip()
         password = self.Password.text().strip()
         phonenumber = self.PhoneNumber.text().strip()
@@ -23,7 +24,11 @@ class LoginWindow(QMainWindow):
             resolve = DTB.signin(user_tuple)
             if resolve:
                 self.close()
-                HomePG.show()
+                if HOMEPG is None:
+                    HOMEPG = MainWindow(resolve)
+                    HOMEPG.show()
+                else:
+                    HOMEPG.show()
             else:
                 msg_box.setText("Invalid email or password or phonenumber")
                 msg_box.exec()
@@ -59,6 +64,7 @@ class SignupWindow(QMainWindow):
             self.Password.setEchoMode(QLineEdit.EchoMode.Password)
 
     def Homepage(self):
+        global HOMEPG
         Business = self.Business.text().strip()
         Username = self.Username.text().strip()
         Email = self.Email.text().strip()
@@ -90,7 +96,11 @@ class SignupWindow(QMainWindow):
                 msg_box.exec()
             else:
                 self.close()
-                HomePG.show()
+                if HOMEPG is None:
+                    HOMEPG = MainWindow(resolve)
+                    HOMEPG.show()
+                else:
+                    HOMEPG.show()
 
     def login_(self):
         self.close()
@@ -98,17 +108,30 @@ class SignupWindow(QMainWindow):
 
 class MainWindow(QMainWindow):
     ui = r"ui\home.ui"
-    def __init__(self):
+    def __init__(self,user):
         super().__init__()
         uic.loadUi(self.ui,self)
+        self.user = user
+        self.btn_profile.setText(str(self.user.business_name)[0].capitalize())
+        self.profile_text.setText(str(self.user.business_name).strip())
+        leng = len(str(self.user.business_name))
+        if leng <= 10:
+            size = 28
+        elif leng <= 15:
+            size = 21
+        else:
+            size = 17
+        self.profile_text.setStyleSheet(f"font-size: {size}px;")
         self.exit.clicked.connect(self.Exit)
         self.logout.clicked.connect(self.Logout)
     
     def Logout(self):
+        global HOMEPG
         # Ghi đè file config.ini thành file trắng (xóa hết nội dung)
         with open(r"database\config.ini", "w") as f:
             f.write("")  # hoặc dùng: pass
         self.close()
+        HOMEPG = None
         Login.show()
     
     def Exit(self):
@@ -122,10 +145,11 @@ if __name__ == "__main__":
     msg_box.setIcon(QMessageBox.Icon.Warning)
     Login = LoginWindow()
     Signup = SignupWindow()
-    HomePG = MainWindow()
     keepmelogin = DTB.checkkeeplogin()
     if keepmelogin:
-        HomePG.show()
+        HOMEPG = MainWindow(keepmelogin)
+        HOMEPG.show()
     else:
+        HOMEPG = None
         Login.show()
     sys.exit(app.exec())

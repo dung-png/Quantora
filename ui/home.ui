@@ -327,12 +327,12 @@ font-size:10px;</string>
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="Language">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+        <widget class="QCheckBox" name="checkBox">
+         <property name="minimumSize">
+          <size>
+           <width>32</width>
+           <height>32</height>
+          </size>
          </property>
          <property name="maximumSize">
           <size>
@@ -341,21 +341,24 @@ font-size:10px;</string>
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">border:none;
-background-color:none;</string>
+          <string notr="true">QCheckBox::indicator {
+	width:32px;
+	height:32px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(D:/Quantora/ui/src/vietnam.png);   /* icon khi chưa check */
+}
+
+QCheckBox::indicator:checked {
+    image: url(D:/Quantora/ui/src/flags.png);     /* icon khi check */
+}</string>
          </property>
          <property name="text">
           <string/>
          </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>src/flags.png</normaloff>src/flags.png</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>32</width>
-           <height>32</height>
-          </size>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

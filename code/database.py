@@ -38,7 +38,7 @@ class User_DATA():
                 current_user = self.get_user_by_email(email_input=email)
                 if current_user:
                     if username == current_user.username and business_name == current_user.business_name and password == current_user.password and phonenumber == current_user.phonenumber and countrycode == current_user.countrycode:
-                        return True
+                        return current_user
                 return False
             
     def read(self):
@@ -79,11 +79,14 @@ class User_DATA():
         list_ = self.countrycode[countrycode_input].split('.')
         if len(phonenumber_input) >= int(list_[0]) and len(phonenumber_input) <= int(list_[1]):
             for user in self.user_list:
-                if user.phonenumber == phonenumber_input:
+                if user.phonenumber == "0"+phonenumber_input:
+                    return False
+                elif user.phonenumber == phonenumber_input:
                     return False
             if len(phonenumber_input) < int(list_[1]):
                 return 1
-            return True
+            else:
+                return True
         return False
     
     def get_user_by_email(self,email_input):
