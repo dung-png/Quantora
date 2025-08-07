@@ -124,6 +124,8 @@ class MainWindow(QMainWindow):
         self.profile_text.setStyleSheet(f"font-size: {size}px;")
         self.exit.clicked.connect(self.Exit)
         self.logout.clicked.connect(self.Logout)
+        self.Home.clicked.connect(self.home)
+        self.Products.clicked.connect(self.products_page)
     
     def Logout(self):
         global HOMEPG
@@ -137,6 +139,12 @@ class MainWindow(QMainWindow):
     def Exit(self):
         self.close()
         sys.exit()
+
+    def home(self):
+        self.stackedWidget.setCurrentIndex(0)
+
+    def products_page(self):
+        self.stackedWidget.setCurrentIndex(2)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -152,4 +160,8 @@ if __name__ == "__main__":
     else:
         HOMEPG = None
         Login.show()
-    sys.exit(app.exec())
+    exit_code = app.exec()
+    # Chỉ chạy khi app THOÁT HẲN
+    DTB.cursor.close()
+    DTB.user_db.close()
+    sys.exit(exit_code)
