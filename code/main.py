@@ -1,7 +1,9 @@
-from PyQt6.QtWidgets import QApplication,QMainWindow,QLineEdit,QMessageBox,QPushButton
+from PyQt6.QtWidgets import QApplication,QMainWindow,QLineEdit,QMessageBox,QPushButton,QGridLayout
 from PyQt6 import uic
 import sys
-from database import User_DATA
+from database import User_DATA,Product_DATA
+from dialog import AddDialog,EditDialog
+from column import ProductContainer
 
 DTB = User_DATA()
 class LoginWindow(QMainWindow):
@@ -41,7 +43,6 @@ class LoginWindow(QMainWindow):
         Signup.show()
 
     def passwordechomode(self):
-        print(self.btn_Password.isChecked())
         if not self.btn_Password.isChecked() and self.Password.echoMode() == QLineEdit.EchoMode.Password:
             self.Password.setEchoMode(QLineEdit.EchoMode.Normal)
         else:
@@ -57,7 +58,6 @@ class SignupWindow(QMainWindow):
         self.Login.clicked.connect(self.login_)
 
     def passwordechomode(self):
-        print(self.btn_Password.isChecked())
         if not self.btn_Password.isChecked() and self.Password.echoMode() == QLineEdit.EchoMode.Password:
             self.Password.setEchoMode(QLineEdit.EchoMode.Normal)
         else:
@@ -75,7 +75,6 @@ class SignupWindow(QMainWindow):
         user_tuple = (Business,Username,Email,Password,PhoneNumber,countrycode)
         if Email and Password and Confirm_Password:
             resolve = DTB.signup(user_tuple)
-            print(resolve)
             if resolve == 1:
                 msg_box.setText("The password must contain between 8 and 20 characters")
                 msg_box.exec()
@@ -111,6 +110,9 @@ class MainWindow(QMainWindow):
     def __init__(self,user):
         super().__init__()
         uic.loadUi(self.ui,self)
+        global PRODUCT_DTB, grlayout, UI
+        UI = self
+        PRODUCT_DTB = Product_DATA(user.id)
         self.user = user
         self.btn_profile.setText(str(self.user.business_name)[0].capitalize())
         self.profile_text.setText(str(self.user.business_name).strip())
@@ -126,7 +128,19 @@ class MainWindow(QMainWindow):
         self.logout.clicked.connect(self.Logout)
         self.Home.clicked.connect(self.home)
         self.Products.clicked.connect(self.products_page)
-    
+        self.grid_layout = QGridLayout(self.scrollAreaWidgetContents_2)
+        grlayout = self.grid_layout
+        grlayout.setVerticalSpacing(10)
+        grlayout.setHorizontalSpacing(10)
+        grlayout.setContentsMargins(10, 10, 10, 10)
+        self.layout = Products_layout()
+        self.setupProductpage()
+
+        self.Add.clicked.connect(lambda: ProductsCRUD.Add(self,self.user.id,self.layout))
+        self.Edit.clicked.connect(lambda: ProductsCRUD.Edit(self,self.user.id,self.layout))
+        self.Remove.clicked.connect(lambda: ProductsCRUD.Remove(self,self.layout))
+        self.Search.clicked.connect(lambda: self.layout.Search())
+
     def Logout(self):
         global HOMEPG
         # Ghi đè file config.ini thành file trắng (xóa hết nội dung)
@@ -145,6 +159,110 @@ class MainWindow(QMainWindow):
 
     def products_page(self):
         self.stackedWidget.setCurrentIndex(2)
+    
+    def products_page_setup(self):
+        self.Add.clicked.connect()
+        self.Edit.clicked.connect()
+        self.Remove.clicked.connect()
+
+    def setupProductpage(self):
+        self.layout.display()
+
+class ProductsCRUD():
+    def Add(self,user_id,layout):
+        add_dl = AddDialog(user_id)
+        if add_dl.exec(): # CHECK NEU DIALOG DANG RUN  VA BUTTON OK DUOC NHAN
+            #LAY DATA INPUT VAO CONVERT SANG DICT
+            input = add_dl.returnInputValue()
+            if input[5].strip().lower() == "browse".strip().lower():
+                input = (input[0],input[4],input[1],input[2],input[3])
+                PRODUCT_DTB.Insert_(input)
+                layout.updateLayout()
+            else:
+                pass
+    def Edit(self,user_id,layout):
+        selected = []
+        for product in product_object_list:
+            if product.selected:
+                selected.append(product)
+        if len(selected) != 1:
+            for product in selected:
+                product.selected = False
+                product.ui.frame.setStyleSheet("""
+QFrame {
+background-color:white;
+border:3px solid black;
+border-radius:20%;
+}
+QFrame > QLabel{
+	border:none;
+	background:none;
+	font: 87 18pt "Segoe UI Black";
+	color:black;
+}
+""")
+            msg_box.setText("Please select a single product to edit")
+            msg_box.exec()
+        elif len(selected) == 1:
+            edit_dl = EditDialog(user_id=user_id,object=selected[0].product)
+            if edit_dl.exec():
+                input = edit_dl.returnInputValue()
+                # image_path = ? , name = ? , available = ? , cost = ? WHERE id = ? AND user_id = ?
+                PRODUCT_DTB.Edit_((input[4],input[1],input[2],input[3],selected[0].product.id,input[0]))
+                selected[0].product.update_((input[4],input[1],input[2],input[3]))
+                layout.updateLayout()
+        
+    def Remove(self,layout):
+        for product_container in product_object_list:
+            if product_container.selected:
+                PRODUCT_DTB.Remove_(product_container.product)
+                product_container.deleteLater()
+        product_object_list.clear()
+        layout.updateLayout()
+
+class Products_layout():
+    def __init__(self):
+        global product_object_list
+        product_object_list = []
+
+    def display(self):
+        global product_object_list
+        product_object_list = []
+        for index,product in enumerate(PRODUCT_DTB.product_list):
+            row = index % 2       # 0 nếu chẵn, 1 nếu lẻ
+            col = index // 2
+            product_container = ProductContainer(product)
+            product_object_list.append(product_container)
+            grlayout.addWidget(product_container, row, col)
+        UI.scrollAreaWidgetContents_2.setLayout(grlayout)
+    
+    def clearLayout(self):
+        while grlayout.count():
+            child = grlayout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+    def updateLayout(self, item_list = None):
+        global product_object_list
+        product_object_list = []
+        self.clearLayout()
+        if item_list is None:
+            item_list = PRODUCT_DTB.product_list
+        for index,product in enumerate(item_list):
+            row = index % 2
+            col = index // 2
+            product_container = ProductContainer(product)
+            product_object_list.append(product_container)
+            grlayout.addWidget(product_container, row, col)
+
+    def Search(self):
+        search_field = UI.searchinput.text().strip()
+        if search_field:
+            matched_list = PRODUCT_DTB.Search(search_field)
+            UI.scrollAreaWidgetContents_2.setLayout(grlayout)
+            self.updateLayout(matched_list)
+        else:
+            self.updateLayout(PRODUCT_DTB.product_list)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
