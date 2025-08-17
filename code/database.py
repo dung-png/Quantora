@@ -163,13 +163,14 @@ class User():
         self.countrycode = countrycode
 
 class Product_DATA():
-    def __init__(self, user_id):
+    def __init__(self, user_id , type):
         self.product_db = sqlite3.connect(r'database\products.db')
         self.cursor = self.product_db.cursor()
         self.cursor.execute("CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL , image_path TEXT , name TEXT NOT NULL , available INTEGER NOT NULL , cost INTEGER NOT NULL)")
         self.product_db.commit()
         self.product_list = []
         self.Read_data(user_id)
+        self.product_list = self._Sort_(self.product_list,type)
 
     def Read_data(self , user_id):
         self.cursor.execute("SELECT * FROM products")
@@ -198,8 +199,25 @@ class Product_DATA():
         self.cursor.execute("UPDATE products SET image_path = ? , name = ? , available = ? , cost = ? WHERE id = ? AND user_id = ?",tuple__)
         self.product_db.commit()
 
-    def _Sort_(self,list_ : list ,reversed_):
-        return list_.sort(reverse=reversed_)
+    def _Sort_(self,input_list,type):
+        if type.lower().strip() == "A-Z".lower().strip():
+            for origin in range(len(input_list)):
+                for index in range(origin+1,len(input_list)):
+                    if input_list[origin].name > input_list[index].name:
+                        input_list[origin] ,input_list[index] = input_list[index], input_list[origin]
+            return input_list
+        elif type.lower().strip() == "Z-A".lower().strip():
+            for origin in range(len(input_list)):
+                for index in range(origin+1,len(input_list)):
+                    if input_list[origin].name < input_list[index].name:
+                        input_list[origin] ,input_list[index] = input_list[index], input_list[origin]
+            return input_list
+        else:
+            for origin in range(len(input_list)):
+                for index in range(origin+1,len(input_list)):
+                    if input_list[origin].id < input_list[index].id:
+                        input_list[origin] ,input_list[index] = input_list[index], input_list[origin]
+            return input_list
     
     def Search(self,Input__):
         result = []

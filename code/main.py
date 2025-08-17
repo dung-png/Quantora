@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
         uic.loadUi(self.ui,self)
         global PRODUCT_DTB, grlayout, UI
         UI = self
-        PRODUCT_DTB = Product_DATA(user.id)
+        PRODUCT_DTB = Product_DATA(user.id, self.SORT.currentText())
         self.user = user
         self.btn_profile.setText(str(self.user.business_name)[0].capitalize())
         self.profile_text.setText(str(self.user.business_name).strip())
@@ -135,11 +135,11 @@ class MainWindow(QMainWindow):
         grlayout.setContentsMargins(10, 10, 10, 10)
         self.layout = Products_layout()
         self.setupProductpage()
-
         self.Add.clicked.connect(lambda: ProductsCRUD.Add(self,self.user.id,self.layout))
         self.Edit.clicked.connect(lambda: ProductsCRUD.Edit(self,self.user.id,self.layout))
         self.Remove.clicked.connect(lambda: ProductsCRUD.Remove(self,self.layout))
         self.Search.clicked.connect(lambda: self.layout.Search())
+        self.SORT.currentTextChanged.connect(lambda : ProductsCRUD._sort_(self,self.layout,self.SORT.currentText()))
 
     def Logout(self):
         global HOMEPG
@@ -169,6 +169,12 @@ class MainWindow(QMainWindow):
         self.layout.display()
 
 class ProductsCRUD():
+    def _sort_(self,layout,type):
+        sorted_list = PRODUCT_DTB._Sort_(product_object_list,type)
+        for item in sorted_list:
+            print(item.name)
+        layout.updateLayout(sorted_list)
+
     def Add(self,user_id,layout):
         add_dl = AddDialog(user_id)
         if add_dl.exec(): # CHECK NEU DIALOG DANG RUN  VA BUTTON OK DUOC NHAN
@@ -182,7 +188,7 @@ class ProductsCRUD():
                 pass
     def Edit(self,user_id,layout):
         selected = []
-        for product in product_object_list:
+        for product in product_container_object_list:
             if product.selected:
                 selected.append(product)
         if len(selected) != 1:
@@ -213,26 +219,30 @@ QFrame > QLabel{
                 layout.updateLayout()
         
     def Remove(self,layout):
-        for product_container in product_object_list:
+        for product_container in product_container_object_list:
             if product_container.selected:
                 PRODUCT_DTB.Remove_(product_container.product)
                 product_container.deleteLater()
+        product_container_object_list.clear()
         product_object_list.clear()
         layout.updateLayout()
 
 class Products_layout():
     def __init__(self):
-        global product_object_list
+        global product_container_object_list, product_object_list
+        product_container_object_list = []
         product_object_list = []
 
     def display(self):
-        global product_object_list
+        global product_container_object_list, product_object_list
+        product_container_object_list = []
         product_object_list = []
         for index,product in enumerate(PRODUCT_DTB.product_list):
             row = index % 2       # 0 nếu chẵn, 1 nếu lẻ
             col = index // 2
             product_container = ProductContainer(product)
-            product_object_list.append(product_container)
+            product_container_object_list.append(product_container)
+            product_object_list.append(product)
             grlayout.addWidget(product_container, row, col)
         UI.scrollAreaWidgetContents_2.setLayout(grlayout)
     
@@ -243,7 +253,8 @@ class Products_layout():
                 child.widget().deleteLater()
 
     def updateLayout(self, item_list = None):
-        global product_object_list
+        global product_container_object_list, product_object_list
+        product_container_object_list = []
         product_object_list = []
         self.clearLayout()
         if item_list is None:
@@ -252,7 +263,8 @@ class Products_layout():
             row = index % 2
             col = index // 2
             product_container = ProductContainer(product)
-            product_object_list.append(product_container)
+            product_container_object_list.append(product_container)
+            product_object_list.append(product)
             grlayout.addWidget(product_container, row, col)
 
     def Search(self):
