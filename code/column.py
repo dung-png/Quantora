@@ -55,3 +55,15 @@ QFrame > QLabel{
 	color:black;
 }
 """)
+                
+class recentactivity(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.ui = uic.loadUi(r"ui\recentactivity.ui", self)
+        self.display_column()
+
+    def display_column(self):
+        self.ui.label_32.setText("Low stock alert")
+        self.ui.label_33.setText("AMD Ryzen 5 5600")
+        self.ui.label.setText("Warning")
+        self.ui.label_34.setText("5 mins ago")

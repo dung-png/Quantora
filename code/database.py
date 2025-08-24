@@ -122,21 +122,21 @@ class User_DATA():
         self.user_list.append(new_user)
         return new_user
     
-    def checkphonenumber(self, input_number, stored_number):
+    def checkphonenumber(self, input_number, stored_number, countrycode , stored_countrycode):
         input_number = str(input_number).strip()
         stored_number = str(stored_number).strip()
-
-        if input_number == stored_number:
-            return True
-        elif input_number == "0" + stored_number:
-            return True
-        elif stored_number == "0" + input_number:
-            return True
+        if countrycode == stored_countrycode:
+            if input_number == stored_number:
+                return True
+            elif input_number == "0" + stored_number:
+                return True
+            elif stored_number == "0" + input_number:
+                return True
         return False
 
     def signin(self, user_tuple):
         user = self.get_user_by_email(user_tuple[0].strip())
-        if user and str(user.password).strip() == str(user_tuple[1]).strip() and self.checkphonenumber(user_tuple[2],user.phonenumber):
+        if user and str(user.password).strip() == str(user_tuple[1]).strip() and self.checkphonenumber(user_tuple[2],user.phonenumber,user_tuple[4], user.countrycode):
             if user_tuple[3]:
                 config = configparser.ConfigParser()
                 config["Keeplogin"] = {
